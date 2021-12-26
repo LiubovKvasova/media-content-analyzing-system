@@ -1,10 +1,11 @@
 'use strict';
 
-const express = require("express");
+const express = require('express');
+const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 
 const app = express();
-const jsonParser = express.json();
+app.use(bodyParser.json({ type: 'application/*+json' }))
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -16,7 +17,7 @@ const db = mysql.createConnection({
 const FIELD_NAMES = ['id', 'name', 'description', 'DataStream_id'];
 
 // Add report to table
-app.post('/api/report/add', jsonParser, async (req, res) => {
+app.post('/api/report/add', async (req, res) => {
   const values = [];
   for (const field of FIELD_NAMES) {
     values[field] = req.body[field];
@@ -25,7 +26,7 @@ app.post('/api/report/add', jsonParser, async (req, res) => {
   const query = `INSERT INTO Report (${FIELD_NAMES.join(', ')}) ` +
     `VALUES (${FIELD_NAMES.map(() => '?').join(', ')}) `;
 
-  const result = await db.query(query, values);
+  const [ result ] = await db.query(query, values);
     
   if (result) {
     res.send(result);
@@ -37,7 +38,7 @@ app.post('/api/report/add', jsonParser, async (req, res) => {
 // Recieve report by id
 app.get('/api/report/:id', async (req, res) => {
   const query = 'SELECT * FROM Report WHERE id = ?';
-  const result = await db.query(query, req.body.id);
+  const [ result ] = await db.query(query, req.params.id);
 
   if (result) {
     res.send(result);
@@ -50,7 +51,7 @@ app.get('/api/report/:id', async (req, res) => {
 app.get('/api/report/all', async (req, res) => {
   const query = 'SELECT * FROM Report';
 
-  const result = await db.query(query);
+  const [ result ] = await db.query(query);
 
   if (result) {
     res.send(result);
@@ -60,7 +61,7 @@ app.get('/api/report/all', async (req, res) => {
 });
 
 // Update a report
-app.put('/api/report/update', jsonParser, async (req, res) => {
+app.put('/api/report/update', async (req, res) => {
   let query = 'UPDATE Report SET ';
   let changedPropertiesQuery = '';
   const newValues = [];
@@ -82,7 +83,7 @@ app.put('/api/report/update', jsonParser, async (req, res) => {
   }
 
   query += changedPropertiesQuery + `WHERE id = ${req.body.id}`;
-  const result = await db.query(query, newValues);
+  const [ result ] = await db.query(query, newValues);
 
   if (result) {
     res.send(result);
@@ -94,7 +95,7 @@ app.put('/api/report/update', jsonParser, async (req, res) => {
 // Remove report
 app.delete('/api/report/:id', async (req, res) => {
   const query = 'DELETE FROM Report WHERE id = ?';
-  const result = await db.query(query, req.body.id);
+  const [ result ] = await db.query(query, req.params.id);
 
   if (result) {
     res.send(result);
