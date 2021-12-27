@@ -1,11 +1,16 @@
 'use strict';
 
 const express = require('express');
-const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 
 const app = express();
-app.use(bodyParser.json({ type: 'application/*+json' }))
+app.use(express.json());
+
+// Error handler
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  res.status(500).send('Something broke!');
+});
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -20,18 +25,18 @@ const FIELD_NAMES = ['id', 'name', 'description', 'DataStream_id'];
 app.post('/api/report/add', async (req, res) => {
   const values = [];
   for (const field of FIELD_NAMES) {
-    values[field] = req.body[field];
+    values.push(req.body[field]);
   }
 
   const query = `INSERT INTO Report (${FIELD_NAMES.join(', ')}) ` +
     `VALUES (${FIELD_NAMES.map(() => '?').join(', ')}) `;
 
-  const [ result ] = await db.query(query, values);
-    
-  if (result) {
+  try {
+    const [ result ] = await db.query(query, values);
     res.send(result);
-  } else {
-    res.sendStatus(409);
+  } catch(error) {
+    console.log(error);
+    res.sendStatus(400);
   }
 });
 
@@ -40,7 +45,7 @@ app.get('/api/report/:id', async (req, res) => {
   const query = 'SELECT * FROM Report WHERE id = ?';
   const [ result ] = await db.query(query, req.params.id);
 
-  if (result) {
+  if (result.length) {
     res.send(result);
   } else {
     res.sendStatus(404);
@@ -53,7 +58,7 @@ app.get('/api/report/all', async (req, res) => {
 
   const [ result ] = await db.query(query);
 
-  if (result) {
+  if (result.length) {
     res.send(result);
   } else {
     res.sendStatus(404);
@@ -62,7 +67,7 @@ app.get('/api/report/all', async (req, res) => {
 
 // Update a report
 app.put('/api/report/update', async (req, res) => {
-  let query = 'UPDATE Report SET ';
+  let query = 'UPDATE Report SET';
   let changedPropertiesQuery = '';
   const newValues = [];
 
@@ -73,7 +78,11 @@ app.put('/api/report/update', async (req, res) => {
 
     const newValue = req.body[field]; 
     if (newValue) {
-      changedPropertiesQuery += `${field} = ? `;
+      if (changedPropertiesQuery.length) {
+        changedPropertiesQuery += ',';
+      }
+
+      changedPropertiesQuery += ` ${field} = ?`;
       newValues.push(newValue);
     }
   }
@@ -82,13 +91,14 @@ app.put('/api/report/update', async (req, res) => {
     return res.sendStatus(400);
   }
 
-  query += changedPropertiesQuery + `WHERE id = ${req.body.id}`;
-  const [ result ] = await db.query(query, newValues);
+  query += changedPropertiesQuery + ` WHERE id = ${req.body.id}`;
 
-  if (result) {
+  try {
+    const [ result ] = await db.query(query, newValues);
     res.send(result);
-  } else {
-    res.sendStatus(404);
+  } catch(error) {
+    console.log(error);
+    res.sendStatus(400);
   }
 });
 
@@ -97,17 +107,8 @@ app.delete('/api/report/:id', async (req, res) => {
   const query = 'DELETE FROM Report WHERE id = ?';
   const [ result ] = await db.query(query, req.params.id);
 
-  if (result) {
-    res.send(result);
-  } else {
-    res.sendStatus(404);
-  }
+  res.send(result);
 });
 
 const PORT = 3000 || process.env.PORT;
-
-try {
-  app.listen(PORT, () => console.log(`Server is running at ${PORT}`));
-} catch (error) {
-  console.log(error);
-}
+app.listen(PORT, () => console.log(`Server is running at ${PORT}`));
