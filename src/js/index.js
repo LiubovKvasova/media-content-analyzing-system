@@ -40,10 +40,11 @@ app.post('/api/report/add', async (req, res) => {
   }
 });
 
-// Recieve report by id
-app.get('/api/report/:id', async (req, res) => {
-  const query = 'SELECT * FROM Report WHERE id = ?';
-  const [ result ] = await db.query(query, req.params.id);
+// Recieve all the reports
+app.get('/api/report/all', async (req, res) => {
+  const query = 'SELECT * FROM Report';
+
+  const [ result ] = await db.query(query);
 
   if (result.length) {
     res.send(result);
@@ -52,11 +53,10 @@ app.get('/api/report/:id', async (req, res) => {
   }
 });
 
-// Recieve all the reports
-app.get('/api/report/all', async (req, res) => {
-  const query = 'SELECT * FROM Report';
-
-  const [ result ] = await db.query(query);
+// Recieve report by id
+app.get('/api/report/:id', async (req, res) => {
+  const query = 'SELECT * FROM Report WHERE id = ?';
+  const [ result ] = await db.query(query, req.params.id);
 
   if (result.length) {
     res.send(result);
