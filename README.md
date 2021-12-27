@@ -13,4 +13,4 @@
 * Марина Васильєва
 * Анастасія Саніна
 
-**[Переглянути проект](https://yaroslavels.github.io/media-content-analyzing-system/)**
+**[Переглянути проект](https://liubovkvasova.github.io/media-content-analyzing-system/)**
