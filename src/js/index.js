@@ -112,7 +112,7 @@ app.delete('/api/report/:id', async (req, res) => {
 
 const PORT = 3000 || process.env.PORT;
 const listener = app.listen(PORT, () => {
-  console.log(`Server is running at ${PORT}`)
+  console.log(`Server is running at ${PORT}`);
 });
 
 module.exports = listener;
